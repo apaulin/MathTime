@@ -1,0 +1,191 @@
+
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<style>
+    input
+    {
+    	font: 16pt arial black;
+    }
+	#gameSpan
+	{
+		position: absolute;
+		left: 150px;
+		top: 150px;
+		visibility: hidden;
+	}
+
+	#getId
+	{
+		position: absolute;
+		left: 50px;
+		top: 50px;
+	}
+  </style>
+  
+<script langage="javascript">
+var max = new Array (20, 15, 12);
+var maxOps = 3;
+var quizLength = 10;
+var startTime;
+var expectedResult = -1;
+var goodAnswers = -1;
+var playerId = "";
+var xmlhttp = new XMLHttpRequest();
+
+
+var setParams = function()
+{
+	var id = $("playerId").value;
+
+	if (id == 1) // Jeremie
+	{
+		max = new Array(20, 20, 6);
+		maxOps = 3;
+		quizLength = 12;
+		playerId = "Jérémie";
+	}
+	else if (id == 2) // Emilie-Anne
+	{
+		max = new Array(18, 16, 4);
+		maxOps = 3;
+		quizLength = 11;
+		playerId = "Émilie-Anne";
+	}
+	else if (id == 3) // Papa
+	{
+		max = new Array(99, 99, 12);
+		maxOps = 3;
+		quizLength = 2;
+		playerId = "Papa";
+	}
+}
+
+
+
+var $ = function(id)
+{
+	return document.getElementById(id);
+}
+
+var start = function()
+{
+	startTime = new Date();
+	setParams();
+	goodAnswers = 0;
+	$("getId").style.visibility = "hidden";
+	$("gameSpan").style.visibility = "visible";
+	$("reponse").focus();
+	
+	newEquation();
+
+
+}
+
+var newEquation = function()
+{
+	$("reponse").value = "";
+	$("reponse").style.backgroundColor = "white";
+	var o = Math.floor(Math.random() * maxOps);
+
+	var1 = Math.floor((Math.random() * max[o]) + 1);
+	var2 = Math.floor((Math.random() * max[o]) + 1);
+
+	if (o == 0)
+	{
+		$("ops").value = "+";
+		expectedResult = var1 + var2;	
+	}
+	else if (o == 1)
+	{
+		$("ops").value = "-";
+		if (var1 < var2)
+		{
+			var tmp = var1;
+			var1 = var2;
+			var2 = tmp;
+		}
+		expectedResult = var1 - var2;	
+	}
+	else if (o == 2)
+	{
+		$("ops").value = "X";
+		expectedResult = var1 * var2;	
+	}
+
+	$("i1").value = var1;	
+	$("i2").value = var2;
+
+}
+
+var checkAnswer = function()
+{
+	if ($("reponse").value == expectedResult)
+	{
+		goodAnswers++;
+		if (goodAnswers >= quizLength)
+		{
+			$("i1").value = "";	
+			$("i2").value = "";
+			$("reponse").value = "";
+			var totalTime = ((new Date()) - startTime)/1000 - (quizLength-1); // Pauses between questions
+			$("status").textContent = "Bravo " + Math.floor(totalTime *10)/10 + " secondes!!!!!!!!!";
+			$("status").style.font = "24pt arial bold";
+			$("status").style.color = "blue";
+			var postJson = { "name": playerId,
+								  "maxOps": maxOps,
+								  "max1": max[0],
+								  "max2": max[1],
+								  "max3": max[2],
+								  "quizLength": quizLength,
+								  "totalTime": totalTime,
+								  "startTime": startTime };
+			xmlhttp.open("POST", "/results");
+			xmlhttp.send(JSON.stringify(postJson));
+
+	   }
+		else
+		{
+			$("status").textContent = goodAnswers + " / " + quizLength;
+			$("reponse").style.backgroundColor = "green";
+			setTimeout("newEquation();", 1000);
+		}
+	}
+}
+
+
+xmlhttp.onreadystatechange = function() 
+{
+	if (xmlhttp.readyState == 4 && xmlhttp.status == 200) 
+	{
+      document.getElementById("demo").innerHTML = xmlhttp.responseText;
+	}
+};
+
+
+
+</script>
+
+</head>
+<body>
+<span id="getId">
+Qui va jouer le prochain jeu ?
+<select id="playerId">
+	<option value="1">Jérémie</option>
+	<option value="2">Émilie-Anne</option>
+	<option value="3">Papa</option>
+</select>
+<input type="button" value="Go!" onclick="start();" />
+</span>
+
+<span id="gameSpan">
+<input type="text" size="3" id="i1"> <input type="text" size="2" id="ops"/> <input type="text" size="3" id="i2" /> = 
+<input type="text" size="5" id="reponse" onkeyup="checkAnswer();"/>
+
+<span id="status"></span>
+</span>
+
+<span id="demo"></span>
+</body>
+</html>

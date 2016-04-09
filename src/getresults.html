@@ -1,0 +1,47 @@
+<html>
+<head>
+<script language="javascript" >
+	var now = new Date();
+	var httpRequest= new XMLHttpRequest();
+	var inputs = null;
+	var getStats = function()
+	{
+		document.getElementById("demo").textContent += "Sending request\n";
+		httpRequest.open("GET", "/stats");
+		httpRequest.send();
+	}
+	
+	httpRequest.onreadystatechange = function() 
+	{
+		if (httpRequest.readyState == 4 && httpRequest.status == 200) 
+		{
+			//document.getElementById("demo").textContent += httpRequest.responseText + "\n";
+			inputs = JSON.parse("[" + httpRequest.responseText + "]");
+		}
+	};
+	
+	var parseInput = function()
+	{
+		var t = document.createElement("table");
+		for(n in inputs)
+		{
+			var entryDate = new Date(inputs[n].startTime);
+			if (entryDate.toDateString() == now.toDateString())
+			{
+				var r = t.insertRow(-1);
+				var c = r.insertCell(-1);
+				
+				c.appendChild(document.createTextNode(inputs[n].name + "---" + inputs[n].totalTime + "---" + entryDate.toLocaleTimeString()));
+			}
+		}
+		document.getElementById("demo").appendChild(t);
+	}
+</script>
+</head>
+<body onload="getStats();">
+
+<input id="today" value="Aujourd'hui" type="button" onclick="parseInput();"/>
+<span id="demo">
+..
+</span>
+</body>
